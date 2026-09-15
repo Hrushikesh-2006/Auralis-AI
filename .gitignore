@@ -1,0 +1,27 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.db
+.venv/
+venv/
+
+# Runtime data and generated media
+backend/uploads/*
+backend/data/*.db
+backend/data/*.sqlite*
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local tools and logs
+.codex-vite.log
+.qodo/
+*.log
+.vscode/
