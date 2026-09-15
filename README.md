@@ -25,6 +25,10 @@
 
 ![Auralis AI document narration studio](docs/screenshots/podcasts.svg)
 
+### Schedules and Voice Alarms
+
+![Auralis AI schedules and voice alarms](docs/screenshots/schedules.svg)
+
 ## Project Overview
 
 Auralis AI helps people capture and understand meetings without manually replaying long recordings or searching through disconnected notes. It combines audio recording, transcription, speaker-aware analysis, AI summaries, document understanding, natural voice responses, and an always-available Copilot in one workspace.
