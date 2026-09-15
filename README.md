@@ -11,6 +11,20 @@
 
 ![Auralis AI brand mark](frontend/src/assets/hero.png)
 
+## Product Preview
+
+### Insights Dashboard
+
+![Auralis AI insights dashboard](docs/screenshots/dashboard.svg)
+
+### Floating Voice Co-Pilot
+
+![Auralis AI floating voice Copilot](docs/screenshots/copilot.svg)
+
+### Document Narration Studio
+
+![Auralis AI document narration studio](docs/screenshots/podcasts.svg)
+
 ## Project Overview
 
 Auralis AI helps people capture and understand meetings without manually replaying long recordings or searching through disconnected notes. It combines audio recording, transcription, speaker-aware analysis, AI summaries, document understanding, natural voice responses, and an always-available Copilot in one workspace.
@@ -104,7 +118,7 @@ The frontend includes dedicated views for the main workflows:
 | Past History                 | Search and reopen earlier meeting records                             |
 | Floating Mode and PiP        | Keep Jarvis available while working elsewhere                         |
 
-The repository includes the Auralis AI brand asset at [frontend/src/assets/hero.png](frontend/src/assets/hero.png). Product screenshots can be added under `docs/screenshots/` and referenced here as the application evolves.
+The product preview assets live in [docs/screenshots](docs/screenshots). They mirror the application's dark violet interface, insight panels, floating Jarvis experience, and document-to-audio workflow.
 
 ## Architecture
 
