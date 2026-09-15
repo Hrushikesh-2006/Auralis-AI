@@ -9,7 +9,7 @@
 
 > A voice-first meeting intelligence workspace for recording conversations, understanding documents, and turning scattered information into useful answers.
 
-![Auralis AI brand mark](frontend/src/assets/hero.png)
+![Auralis AI voice intelligence](frontend/src/assets/auralis-ai-hero.svg)
 
 ## Product Preview
 
