@@ -29,7 +29,10 @@ app.add_middleware(
 )
 
 # Uploads directory
-UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+if os.environ.get("VERCEL") == "1":
+    UPLOADS_DIR = os.path.join("/tmp", "uploads")
+else:
+    UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
@@ -43,12 +46,15 @@ class KeysModel(BaseModel):
     TRANSCRIPTION_PROVIDER: Optional[str] = None
     LLM_PROVIDER: Optional[str] = None
     GOOGLE_CLIENT_ID: Optional[str] = None
-
+    DATABASE_URL: Optional[str] = None
 
 
 class GoogleLoginModel(BaseModel):
-    credential: str
+    credential: Optional[str] = None
+    access_token: Optional[str] = None
     client_id: Optional[str] = None
+
+
 class EmailRequestModel(BaseModel):
     tone: str = "formal"
 
@@ -64,20 +70,30 @@ def health_check():
     return {"status": "healthy", "service": "Meeting Insights Dashboard API"}
 
 
-
-
 @app.get("/api/auth/config")
 def get_auth_config():
     return {
         "google_client_id": config.GOOGLE_CLIENT_ID,
-        "enabled": bool(config.GOOGLE_CLIENT_ID)
+        "enabled": bool(config.GOOGLE_CLIENT_ID),
+        "database_type": "postgres" if config.DATABASE_URL else "sqlite"
     }
 
 
 @app.post("/api/auth/google")
 def google_login(body: GoogleLoginModel):
     from backend.services.auth_service import sign_in_with_google
-    result = sign_in_with_google(body.credential, body.client_id)
+    result = sign_in_with_google(
+        credential=body.credential,
+        access_token=body.access_token,
+        client_id=body.client_id
+    )
+    return {"status": "success", "data": result}
+
+
+@app.post("/api/auth/demo")
+def demo_auth_login():
+    from backend.services.auth_service import demo_login
+    result = demo_login()
     return {"status": "success", "data": result}
 
 

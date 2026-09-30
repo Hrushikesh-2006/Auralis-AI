@@ -116,7 +116,7 @@ CRITICAL INSTRUCTION ON TIMESTAMPS: Do NOT recite numerical timestamps (such as 
     # 2. Try Gemini API
     if config.GEMINI_API_KEY:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={config.GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.GEMINI_API_KEY}"
             prompt = f"You are Jarvis, a general-purpose AI assistant with optional meeting and audio-recording context. {system_limitation_prompt} {context_prompt} User Query: '{query}'. Start with the substantive answer. Use the recording context only when relevant. Do not mention titles, IDs, filenames, internal labels, empty fields, missing decisions, missing actions, or how the answer was generated. Provide a clear natural answer without numerical timestamps unless the user specifically asks for timestamps."
             resp = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=25)
             if resp.status_code == 200:
@@ -125,7 +125,7 @@ CRITICAL INSTRUCTION ON TIMESTAMPS: Do NOT recite numerical timestamps (such as 
                 return {
                     "answer": clean_answer,
                     "thinking_steps": thinking_steps,
-                    "provider": "Jarvis Thinking Engine (Gemini 3.6 Flash)"
+                    "provider": "Jarvis Thinking Engine (Gemini 2.0 Flash)"
                 }
         except Exception as e:
             print(f"[JarvisService] Gemini error: {e}")

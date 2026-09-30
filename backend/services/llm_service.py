@@ -5,16 +5,16 @@ from backend.config import config
 
 def extract_insights(transcripts: List[Dict[str, Any]], speaker_stats: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Uses LLMs (Groq / Gemini / OpenAI) to extract executive summaries, decisions, action items, open questions, and per-speaker sentiment.
+    Uses LLMs (Groq / Gemini / OpenAI) to extract executive summaries, topic chapters, decisions, conclusions, action items, open questions, and per-speaker sentiment.
     """
-    # 1. Prioritize Groq LLM (groq/compound-mini) for ultra-fast, intelligent JSON extraction
+    # 1. Prioritize Groq LLM (qwen/qwen3.8-27b) for fast, accurate JSON extraction
     if config.GROQ_API_KEY:
         try:
             return _extract_insights_groq(transcripts, speaker_stats)
         except Exception as e:
             print(f"[LLMService] Groq extraction failed: {e}. Falling back...")
 
-    # 2. Try Gemini API (gemini-2.5-flash)
+    # 2. Try Gemini API
     if config.GEMINI_API_KEY:
         try:
             return _extract_insights_gemini(transcripts, speaker_stats)
@@ -48,6 +48,7 @@ def _extract_insights_groq(transcripts: List[Dict[str, Any]], speaker_stats: Lis
 JSON format:
 {{
   "summary": "2-3 sentence executive summary of key discussions and deliverables",
+  "conclusion": "Comprehensive final conclusion and strategic summary of the meeting outcomes",
   "topic_chapters": [
     {{"timestamp_sec": 0, "formatted_time": "0:00", "title": "Topic Title", "part": "Part 1", "description": "Key discussion breakdown"}}
   ],
@@ -63,7 +64,7 @@ JSON format:
 }}
 """
     payload = {
-        "model": "compound-beta-mini",
+        "model": "qwen/qwen3.8-27b",
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3
     }
@@ -87,6 +88,7 @@ def _extract_insights_gemini(transcripts: List[Dict[str, Any]], speaker_stats: L
 Format:
 {{
   "summary": "Executive summary",
+  "conclusion": "Final conclusion and key takeaways",
   "topic_chapters": [{{"timestamp_sec": 0, "formatted_time": "0:00", "title": "Topic", "part": "Part 1", "description": "Description"}}],
   "decisions": [{{"text": "Decision", "speaker": "Speaker", "timestamp": "0s"}}],
   "action_items": [{{"task": "Task", "owner": "Owner", "priority": "high/medium/low"}}],
@@ -110,7 +112,7 @@ def _extract_insights_openai(transcripts: List[Dict[str, Any]], speaker_stats: L
     }
     transcript_text = "\n".join([f"[{t['speaker']} at {t['start_time']}s]: {t['text']}" for t in transcripts])
     
-    prompt = f"Analyze meeting: {transcript_text}. Return JSON with keys: summary, topic_chapters, decisions, action_items."
+    prompt = f"Analyze meeting: {transcript_text}. Return JSON with keys: summary, conclusion, topic_chapters, decisions, action_items."
     payload = {
         "model": "gpt-4o-mini",
         "messages": [{"role": "user", "content": prompt}],
@@ -123,39 +125,63 @@ def _extract_insights_openai(transcripts: List[Dict[str, Any]], speaker_stats: L
 
 
 def generate_followup_email(meeting_title: str, insights: Dict[str, Any], transcripts: List[Dict[str, Any]], tone: str = "formal") -> str:
+    summary_text = insights.get("summary") or "Meeting discussion completed."
+    conclusion_text = insights.get("conclusion") or "The team confirmed next milestones and aligned on deliverables."
+    decisions_list = insights.get("decisions", [])
+    actions_list = insights.get("action_items", [])
+    chapters_list = insights.get("topic_chapters", [])
+
     if config.GROQ_API_KEY:
         try:
             url = "https://api.groq.com/openai/v1/chat/completions"
             headers = {"Authorization": f"Bearer {config.GROQ_API_KEY}", "Content-Type": "application/json"}
-            prompt = f"Draft a professional follow-up email in a {tone} tone for the meeting '{meeting_title}' using these insights:\n{json.dumps(insights)}"
-            resp = requests.post(url, headers=headers, json={"model": "compound-beta-mini", "messages": [{"role": "user", "content": prompt}]}, timeout=30)
+            prompt = f"""Draft a clear, actionable follow-up email in a {tone} tone for the meeting '{meeting_title}'.
+Base the email content strictly on these meeting details:
+
+Executive Summary: {summary_text}
+Conclusion: {conclusion_text}
+Topics Discussed: {json.dumps(chapters_list)}
+Key Decisions Made: {json.dumps(decisions_list)}
+Action Items & Task Ownership: {json.dumps(actions_list)}
+
+Include a clear Subject line, Greeting, Executive Summary section, Key Topics & Decisions, Action Items table/list, Conclusion, and Sign-off. Return ONLY the plain text email.
+"""
+            resp = requests.post(url, headers=headers, json={"model": "qwen/qwen3.8-27b", "messages": [{"role": "user", "content": prompt}], "temperature": 0.3}, timeout=30)
             if resp.status_code == 200:
-                return resp.json()["choices"][0]["message"]["content"]
+                return resp.json()["choices"][0]["message"]["content"].strip()
         except Exception as e:
             print(f"[LLMService] Groq email error: {e}")
 
-    # Fallback template email
-    decisions_text = "\n".join([f"• {d['text'] if isinstance(d, dict) else d}" for d in insights.get("decisions", [])]) or "• No major decisions logged."
-    actions = insights.get("action_items", [])
-    actions_text = "\n".join([f"• [{a.get('owner', 'Team')}] {a.get('task', a.get('text', ''))}" for a in actions if isinstance(a, dict)]) or "• No action items logged."
+    # Fallback template email built from exact meeting details
+    decisions_text = "\n".join([f"• {d['text'] if isinstance(d, dict) else d}" for d in decisions_list]) or "• No major decisions logged."
+    actions_text = "\n".join([f"• [{a.get('owner', 'Unassigned')}] {a.get('task', a.get('text', ''))}" for a in actions_list if isinstance(a, dict)]) or "• No action items logged."
+    topics_text = "\n".join([f"• {c.get('title', 'Topic')}: {c.get('description', '')}" for c in chapters_list if isinstance(c, dict)]) or "• Primary meeting agenda items."
 
-    return f"""Subject: Meeting Follow-Up & Action Items: {meeting_title}
+    return f"""Subject: Follow-Up & Key Decisions: {meeting_title}
 
 Hi Team,
 
-Thank you for your active participation in today's discussion on {meeting_title}.
+Thank you for your time during our discussion on "{meeting_title}". Here is the official summary and action plan based on our meeting:
 
-Executive Summary:
-{insights.get('summary', 'The team convened to review project objectives, technical decisions, and upcoming milestones.')}
+📌 Executive Summary:
+{summary_text}
 
-Key Decisions Made:
+💡 Main Topics Discussed:
+{topics_text}
+
+✅ Confirmed Decisions:
 {decisions_text}
 
-Action Items & Task Ownership:
+🎯 Action Items & Assignments:
 {actions_text}
 
+🏁 Conclusion & Next Steps:
+{conclusion_text}
+
+Please let me know if you have any questions or updates before our next check-in.
+
 Best regards,
-Meeting Coordinator
+Meeting Lead
 """
 
 
@@ -201,14 +227,18 @@ def _extract_insights_heuristic(transcripts: List[Dict[str, Any]], speaker_stats
     if transcripts:
         combined_text = " ".join([t.get("text", "") for t in transcripts[:5]])
         summary_text = f"Live meeting recording analysis: {combined_text[:280]}"
+        conclusion_text = f"The team concluded discussions regarding {topic_chapters[0]['title'] if topic_chapters else 'the primary agenda'} and established clear ownership for all deliverables."
     else:
         summary_text = "The participants convened to discuss agenda objectives and assign action items."
+        conclusion_text = "The meeting concluded with full alignment on key deliverables and next steps."
 
     return {
         "summary": summary_text,
+        "conclusion": conclusion_text,
         "topic_chapters": topic_chapters,
         "decisions": decisions,
         "action_items": action_items,
         "speaker_sentiments": []
     }
+
 

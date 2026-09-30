@@ -331,4 +331,7 @@ This project is distributed under the MIT License. See [LICENSE](LICENSE) for de
 
 Developed by [Hrushikesh Anumula](https://github.com/Hrushikesh-2006).
 
+- Email: [hrushikeshanumula1111@gmail.com](mailto:hrushikeshanumula1111@gmail.com)
+- LinkedIn: [linkedin.com/in/hrushikesh-anumula](https://www.linkedin.com/in/hrushikesh-anumula)
+
 If Auralis AI helps your workflow, consider starring the repository and sharing feedback.

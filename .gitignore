@@ -25,3 +25,4 @@ frontend/.vite/
 .qodo/
 *.log
 .vscode/
+.vercel

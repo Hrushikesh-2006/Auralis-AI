@@ -15,6 +15,7 @@ class Config:
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
     AUTH_SECRET: str = os.getenv("AUTH_SECRET", "change-this-local-dev-secret")
+    DATABASE_URL: str = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or os.getenv("POSTGRES_PRISMA_URL") or os.getenv("POSTGRES_URL_NON_POOLING") or ""
 
 config = Config()
 
@@ -31,6 +32,7 @@ def update_keys(new_keys: dict):
         "has_groq": bool(config.GROQ_API_KEY),
         "has_google_client_id": bool(config.GOOGLE_CLIENT_ID),
         "has_google_client_secret": bool(config.GOOGLE_CLIENT_SECRET),
+        "has_database_url": bool(config.DATABASE_URL),
     }
 
 def get_key_status():
@@ -43,5 +45,7 @@ def get_key_status():
         "transcription_provider": config.TRANSCRIPTION_PROVIDER,
         "llm_provider": config.LLM_PROVIDER,
         "has_google_client_id": bool(config.GOOGLE_CLIENT_ID),
-        "has_google_client_secret": bool(config.GOOGLE_CLIENT_SECRET)
+        "has_google_client_secret": bool(config.GOOGLE_CLIENT_SECRET),
+        "has_database_url": bool(config.DATABASE_URL),
+        "database_type": "postgres" if config.DATABASE_URL else "sqlite"
     }

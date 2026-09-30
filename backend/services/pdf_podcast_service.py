@@ -101,7 +101,7 @@ def _extract_with_gemini_multimodal(file_path: str, original_filename: str) -> s
             }]
         }
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={config.GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.GEMINI_API_KEY}"
         resp = requests.post(url, json=payload, timeout=60)
         if resp.status_code != 200:
             print(f"[PDFPodcast] Gemini multimodal read failed: {resp.status_code} {resp.text}")
@@ -316,7 +316,7 @@ Return ONLY a valid JSON object matching this structure:
     # 2. Try Gemini API
     if config.GEMINI_API_KEY:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={config.GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.GEMINI_API_KEY}"
             resp = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=40)
             if resp.status_code == 200:
                 raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
